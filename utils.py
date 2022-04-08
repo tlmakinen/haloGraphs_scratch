@@ -23,15 +23,16 @@ def get_receivers_senders(nx, dists, connect_radius=100):
     '''connect nodes within `connect_radius` units'''
     
     senders,receivers = jnp.tril_indices(nx, k=-1)
-    mask = dists[jnp.tril_indices(nx, k=-1)] < connect_radius
-    return senders[mask], receivers[mask], dists
+    dists = dists[jnp.tril_indices(nx, k=-1)]
+    mask = dists < connect_radius
+    return senders[mask], receivers[mask], dists[mask]
 
 def get_minspan_receivers_senders(nx, dists, connect_radius=None):
-    """connect graph via minimum spanning tree"""
     min_span_tree = csgraph.minimum_spanning_tree(dists, overwrite=False)
     dists = min_span_tree.toarray()
     senders,receivers = np.where(dists>0.)
     
+    dists = dists[dists > 0.]
     return senders, receivers, dists
 
 def get_minspan_neighborhoods(nx, dists, connect_radius=100):
@@ -48,9 +49,8 @@ def get_minspan_neighborhoods(nx, dists, connect_radius=100):
     
     # add the spanning tree
     dists = dists.at[mask].set(min_span_tree[mask])
-    
     senders,receivers = np.where(dists>0.)
-    
+    dists = dists[jnp.tril_indices(nx, k=-1)]
     return senders, receivers, dists
 
 
